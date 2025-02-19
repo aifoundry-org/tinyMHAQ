@@ -4,6 +4,12 @@ import numpy as np
 from tinygrad import Tensor, dtypes
 from tinygrad.helpers import fetch
 from src.types.data import ImageClassificationDataset
+from src.data.transforms import (
+    ComposeTransforms,
+    image_random_horizontal_flip,
+    image_random_crop,
+    image_normalize,
+)
 
 
 class Cifar10Dataset(ImageClassificationDataset):
@@ -12,6 +18,11 @@ class Cifar10Dataset(ImageClassificationDataset):
         self.val_split = val_split
         self.cifar_mean = [0.4913997551666284, 0.48215855929893703, 0.4465309133731618]
         self.cifar_std = [0.24703225141799082, 0.24348516474564, 0.26158783926049628]
+        self.transform_train = ComposeTransforms[
+            image_random_horizontal_flip(), 
+            image_random_crop(32, padding=4, padding_mode="reflect"), 
+            image_normalize(mean=self.cifar_mean, std=self.cifar_std)
+        ]
 
         super().__init__(data_dir, batch_size)
 
