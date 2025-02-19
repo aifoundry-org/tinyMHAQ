@@ -3,6 +3,7 @@ import numpy as np
 
 from abc import abstractmethod
 from tinygrad.tensor import Tensor
+from tinygrad.helpers import tqdm
 
 
 class ImageClassificationDataset:
@@ -15,6 +16,10 @@ class ImageClassificationDataset:
         self.batch_size = batch_size
 
         self.dataset_path = os.path.join(self.data_dir, self.__class__.__name__)
+
+        self._train_passes = 0
+        self._val_passes = 0
+        self._test_passes = 0
 
     @abstractmethod
     def setup(self):
@@ -35,6 +40,12 @@ class ImageClassificationDataset:
     @abstractmethod
     def get_train_transforms(self, input: Tensor) -> Tensor:
         pass
+
+    def _get_sample_seq(self, size: int, random: bool = False) -> np.ndarray:
+        if random:
+            return np.random.choice(size, size, replace=False)
+        else:
+            return np.arange(size)
 
     def _load_disk_tensor(self, db_list, val_split=0.2, seed=None, postfix=""):
         total_samples = sum(db[b"data"].shape[0] for db in db_list)

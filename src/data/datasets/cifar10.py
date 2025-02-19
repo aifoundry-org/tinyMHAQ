@@ -2,7 +2,7 @@ import os, gzip, tarfile, pickle
 import numpy as np
 
 from tinygrad import Tensor, dtypes
-from tinygrad.helpers import fetch
+from tinygrad.helpers import fetch, tqdm
 from src.types.data import ImageClassificationDataset
 from src.data.transforms import (
     ComposeTransforms,
@@ -21,6 +21,10 @@ class Cifar10Dataset(ImageClassificationDataset):
         self.transform_train = ComposeTransforms[
             image_random_horizontal_flip(), 
             image_random_crop(32, padding=4, padding_mode="reflect"), 
+            image_normalize(mean=self.cifar_mean, std=self.cifar_std)
+        ]
+
+        self.transform_val = ComposeTransforms[
             image_normalize(mean=self.cifar_mean, std=self.cifar_std)
         ]
 
@@ -69,9 +73,15 @@ class Cifar10Dataset(ImageClassificationDataset):
 
                 self.X_val, self.Y_val = self.X_test, self.Y_test
 
+        self.train_samples = self._get_sample_seq(self.X_train.shape[0], random=True)
+        self.val_samples = self._get_sample_seq(self.X_val.shape[0])
+        self.test_samples = self._get_sample_seq(self.X_test.shape[0])
         return super().setup()
 
+
+
     def get_train_batch(self):
+        
         return super().get_train_batch()
 
     def get_val_batch(self):
