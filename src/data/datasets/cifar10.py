@@ -1,6 +1,8 @@
 import os, gzip, tarfile, pickle
 import numpy as np
 
+from typing import Generator
+
 from tinygrad import Tensor, dtypes
 from tinygrad.helpers import fetch, tqdm
 from src.types.data import ImageClassificationDataset
@@ -19,9 +21,9 @@ class Cifar10Dataset(ImageClassificationDataset):
         self.cifar_mean = [0.4913997551666284, 0.48215855929893703, 0.4465309133731618]
         self.cifar_std = [0.24703225141799082, 0.24348516474564, 0.26158783926049628]
         self.transform_train = ComposeTransforms[
-            image_random_horizontal_flip(), 
-            image_random_crop(32, padding=4, padding_mode="reflect"), 
-            image_normalize(mean=self.cifar_mean, std=self.cifar_std)
+            image_random_horizontal_flip(),
+            image_random_crop(32, padding=4, padding_mode="reflect"),
+            image_normalize(mean=self.cifar_mean, std=self.cifar_std),
         ]
 
         self.transform_val = ComposeTransforms[
@@ -73,22 +75,46 @@ class Cifar10Dataset(ImageClassificationDataset):
 
                 self.X_val, self.Y_val = self.X_test, self.Y_test
 
-        self.train_samples = self._get_sample_seq(self.X_train.shape[0], random=True)
-        self.val_samples = self._get_sample_seq(self.X_val.shape[0])
-        self.test_samples = self._get_sample_seq(self.X_test.shape[0])
+        self.train_reset()
+        self.val_reset()
+        self.test_reset()
         return super().setup()
 
+    def train_reset(self):
+        self.train_samples = self._get_sample_seq(self.X_train.shape[0], random=True)
 
+    def val_reset(self):
+        self.val_samples = self._get_sample_seq(self.X_val.shape[0])
 
-    def get_train_batch(self):
-        
-        return super().get_train_batch()
+    def test_reset(self):
+        self.test_samples = self._get_sample_seq(self.X_test.shape[0])
 
-    def get_val_batch(self):
-        return super().get_val_batch()
+    def get_train_batch(self) -> Generator:
+        for i in range(0, len(self.train_samples), self.batch_size):
+            yield (
+                self.transform_train(
+                    self.X_train[self.train_samples[i : i + self.batch_size]]
+                ),
+                self.Y_train[self.train_samples[i : i + self.batch_size]],
+            )
 
-    def get_test_batch(self):
-        return super().get_test_batch()
+    def get_val_batch(self) -> Generator:
+        for i in range(0, len(self.val_samples), self.batch_size):
+            yield (
+                self.transform_val(
+                    self.X_val[self.val_samples[i : i + self.batch_size]]
+                ),
+                self.Y_val[self.val_samples[i : i + self.batch_size]],
+            )
+
+    def get_test_batch(self) -> Generator:
+        for i in range(0, len(self.test_samples), self.batch_size):
+            yield (
+                self.transform_val(
+                    self.X_test[self.test_samples[i : i + self.batch_size]]
+                ),
+                self.Y_test[self.test_samples[i : i + self.batch_size]],
+            )
 
 
 def fetch_cifar():

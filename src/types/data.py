@@ -37,10 +37,6 @@ class ImageClassificationDataset:
     def get_test_batch(self):
         pass
 
-    @abstractmethod
-    def get_train_transforms(self, input: Tensor) -> Tensor:
-        pass
-
     def _get_sample_seq(self, size: int, random: bool = False) -> np.ndarray:
         if random:
             return np.random.choice(size, size, replace=False)
