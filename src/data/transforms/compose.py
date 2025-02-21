@@ -1,3 +1,4 @@
+# TODO Batch processing
 class ComposeTransforms:
   def __init__(self, trans):
     self.trans = trans

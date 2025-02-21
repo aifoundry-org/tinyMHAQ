@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 from typing import Tuple, Union
 from enum import IntEnum
+from tinygrad.tensor import Tensor
 
 
 def pil_img_fromat(img):
@@ -14,6 +15,16 @@ def pil_img_fromat(img):
         raise TypeError(f"Wrong image type: {type(img)}!")
 
     return img
+
+
+def image_reshape(shape: Tuple):
+    def reshape(img: Union[np.ndarray, Tensor]) -> Union[np.ndarray, Tensor]:
+        if isinstance(img, np.ndarray):
+            return np.reshape(img, shape=shape)
+        elif isinstance(img, Tensor):
+            return img.reshape(shape=shape)
+
+    return reshape
 
 
 def image_resize(size: Tuple, interpolation: IntEnum = Image.Resampling.BILINEAR):
@@ -29,10 +40,10 @@ def image_resize(size: Tuple, interpolation: IntEnum = Image.Resampling.BILINEAR
 
 def image_normalize(mean: np.ndarray, std: np.ndarray):
     def normalize(img: Union[np.ndarray]) -> np.ndarray:
-        if img.max > 1:
-            img /= 255
+        if img.max() > 1:
+            img = img / 255
 
-        return (img - mean) / std
+        return (img - mean.reshape(1, 3, 1, 1)) / std.reshape(1, 3, 1, 1)
 
     return normalize
 

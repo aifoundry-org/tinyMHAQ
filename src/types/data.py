@@ -21,6 +21,11 @@ class ImageClassificationDataset:
         self._val_passes = 0
         self._test_passes = 0
 
+        if not os.path.exists(self.dataset_path):
+            os.makedirs(self.dataset_path)
+
+        self.setup()
+
     @abstractmethod
     def setup(self):
         pass
@@ -39,9 +44,9 @@ class ImageClassificationDataset:
 
     def _get_sample_seq(self, size: int, random: bool = False) -> np.ndarray:
         if random:
-            return np.random.choice(size, size, replace=False)
+            return np.random.choice(size, size, replace=False).tolist()
         else:
-            return np.arange(size)
+            return np.arange(size).tolist()
 
     def _load_disk_tensor(self, db_list, val_split=0.2, seed=None, postfix=""):
         total_samples = sum(db[b"data"].shape[0] for db in db_list)

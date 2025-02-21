@@ -10,6 +10,7 @@ from src.data.transforms import (
     ComposeTransforms,
     image_random_horizontal_flip,
     image_random_crop,
+    image_reshape,
     image_normalize,
 )
 
@@ -18,18 +19,19 @@ class Cifar10Dataset(ImageClassificationDataset):
     def __init__(self, data_dir, batch_size, val_split=0.2):
 
         self.val_split = val_split
-        self.cifar_mean = [0.4913997551666284, 0.48215855929893703, 0.4465309133731618]
-        self.cifar_std = [0.24703225141799082, 0.24348516474564, 0.26158783926049628]
-        self.transform_train = ComposeTransforms[
-            image_random_horizontal_flip(),
-            image_random_crop(32, padding=4, padding_mode="reflect"),
+        self.cifar_mean = np.array([0.4913997551666284, 0.48215855929893703, 0.4465309133731618])
+        self.cifar_std = np.array([0.24703225141799082, 0.24348516474564, 0.26158783926049628])
+        self.transform_train = ComposeTransforms([
+            image_reshape((-1, 3, 32, 32)),
+            # image_random_horizontal_flip(),
+            # image_random_crop(32, padding=4, padding_mode="reflect"),
             image_normalize(mean=self.cifar_mean, std=self.cifar_std),
-        ]
+        ])
 
-        self.transform_val = ComposeTransforms[
+        self.transform_val = ComposeTransforms([
+            image_reshape((-1, 3, 32, 32)),
             image_normalize(mean=self.cifar_mean, std=self.cifar_std)
-        ]
-
+        ])
         super().__init__(data_dir, batch_size)
 
     def setup(self):
@@ -81,21 +83,27 @@ class Cifar10Dataset(ImageClassificationDataset):
         return super().setup()
 
     def train_reset(self):
+        self.X_train = self.X_train.to(None)
+        self.Y_train = self.Y_train.to(None)
         self.train_samples = self._get_sample_seq(self.X_train.shape[0], random=True)
 
     def val_reset(self):
+        self.X_val = self.X_val.to(None)
+        self.Y_val = self.Y_val.to(None)
         self.val_samples = self._get_sample_seq(self.X_val.shape[0])
 
     def test_reset(self):
+        self.X_test = self.X_test.to(None)
+        self.Y_test = self.Y_test.to(None)
         self.test_samples = self._get_sample_seq(self.X_test.shape[0])
 
     def get_train_batch(self) -> Generator:
         for i in range(0, len(self.train_samples), self.batch_size):
             yield (
                 self.transform_train(
-                    self.X_train[self.train_samples[i : i + self.batch_size]]
+                    self.X_train[self.train_samples[i : i + self.batch_size]].numpy()
                 ),
-                self.Y_train[self.train_samples[i : i + self.batch_size]],
+                self.Y_train[self.train_samples[i : i + self.batch_size]].numpy(),
             )
 
     def get_val_batch(self) -> Generator:
@@ -111,9 +119,9 @@ class Cifar10Dataset(ImageClassificationDataset):
         for i in range(0, len(self.test_samples), self.batch_size):
             yield (
                 self.transform_val(
-                    self.X_test[self.test_samples[i : i + self.batch_size]]
+                    self.X_test[[self.test_samples[i : i + self.batch_size]]].numpy()
                 ),
-                self.Y_test[self.test_samples[i : i + self.batch_size]],
+                self.Y_test[[self.test_samples[i : i + self.batch_size]]].numpy(),
             )
 
 
