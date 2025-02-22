@@ -6,6 +6,15 @@ from enum import IntEnum
 from tinygrad.tensor import Tensor
 
 
+def to_numpy(img: Tensor) -> np.ndarray:
+    pass
+
+def to_tensor() -> Tensor:
+    def convert_to_tensor(img: np.ndarray):
+        return Tensor(img, dtype='float', requires_grad=False)
+
+    return convert_to_tensor
+
 def pil_img_fromat(img):
     if isinstance(img, np.ndarray):
         img = Image.fromarray(img, mode="L")

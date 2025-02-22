@@ -12,6 +12,7 @@ from src.data.transforms import (
     image_random_crop,
     image_reshape,
     image_normalize,
+    to_tensor,
 )
 
 
@@ -26,6 +27,7 @@ class Cifar10Dataset(ImageClassificationDataset):
             # image_random_horizontal_flip(),
             # image_random_crop(32, padding=4, padding_mode="reflect"),
             image_normalize(mean=self.cifar_mean, std=self.cifar_std),
+            to_tensor()
         ])
 
         self.transform_val = ComposeTransforms([
@@ -103,7 +105,7 @@ class Cifar10Dataset(ImageClassificationDataset):
                 self.transform_train(
                     self.X_train[self.train_samples[i : i + self.batch_size]].numpy()
                 ),
-                self.Y_train[self.train_samples[i : i + self.batch_size]].numpy(),
+                self.Y_train[self.train_samples[i : i + self.batch_size]],
             )
 
     def get_val_batch(self) -> Generator:
@@ -121,7 +123,7 @@ class Cifar10Dataset(ImageClassificationDataset):
                 self.transform_val(
                     self.X_test[[self.test_samples[i : i + self.batch_size]]].numpy()
                 ),
-                self.Y_test[[self.test_samples[i : i + self.batch_size]]].numpy(),
+                self.Y_test[[self.test_samples[i : i + self.batch_size]]],
             )
 
 

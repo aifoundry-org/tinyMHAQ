@@ -44,17 +44,18 @@ class BasicBlock:
         self.shortcut = []
         
         if stride != 1 or in_planes != self.expansion * planes:
-            self.shortcut = LambdaLayer(
+            self.shortcut = [LambdaLayer(
                 lambda x: x[:, :, ::2, ::2].pad(
                     (0, 0, 0, 0, planes//4, planes//4),
                     "constant", 0
                 )
-            )
+            )]
     
     def __call__(self, x: Tensor):
         out = self.bn1(self.conv1(x)).relu()
         out = self.bn2(self.conv2(out))
         out = out + x.sequential(self.shortcut)
+        # out = out + self.shortcut(x)
         out = out.relu()
         return out
 
@@ -81,10 +82,10 @@ class ResNet:
     
     def __call__(self, x: Tensor) -> Tensor:
         out = self.bn1(self.conv1(x)).relu()
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = out.avg_pool(out.size()[3])
+        out = out.sequential(self.layer1)
+        out = out.sequential(self.layer2)
+        out = out.sequential(self.layer3)
+        out = out.avg_pool2d(out.size()[3])
         out = out.flatten(1)
         out = self.linear(out)
         return out

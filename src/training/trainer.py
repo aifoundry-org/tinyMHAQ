@@ -22,23 +22,24 @@ class TinyTrainer:
         
         with Tensor.train():
             for i in (t:= trange(self.epochs)):
-                st = time.time()
-                out = model(input)
-                ft = (time.time() - st) * 1000
+                for batch in dataset.get_train_batch():
+                    out = model(batch[0])
 
-                loss = self.loss_f(out, target)
+                    loss = self.loss_f(out, batch[1])
 
-                self.optim.zero_grad()
+                    self.optim.zero_grad()
 
-                loss.backward()
+                    loss.backward()
 
-                self.optim.step()
+                    self.optim.step()
 
-                for metric in self.train_metrics:
-                    metric_value = metric(out, target)
-                    # TODO metric logging
+                    print(loss.numpy())
+
+                # for metric in self.train_metrics:
+                #     metric_value = metric(out, target)
+                #     # TODO metric logging
                 
-                loss_ = loss.numpy()
+                # loss_ = loss.numpy()
                 # TODO loss logging
 
 
