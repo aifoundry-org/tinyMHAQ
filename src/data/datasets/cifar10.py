@@ -20,14 +20,14 @@ class Cifar10Dataset(ImageClassificationDataset):
     def __init__(self, data_dir, batch_size, val_split=0.2):
 
         self.val_split = val_split
-        self.cifar_mean = np.array([0.4913997551666284, 0.48215855929893703, 0.4465309133731618])
-        self.cifar_std = np.array([0.24703225141799082, 0.24348516474564, 0.26158783926049628])
+        self.cifar_mean = Tensor([0.4913997551666284, 0.48215855929893703, 0.4465309133731618])
+        self.cifar_std = Tensor([0.24703225141799082, 0.24348516474564, 0.26158783926049628])
         self.transform_train = ComposeTransforms([
             image_reshape((-1, 3, 32, 32)),
             # image_random_horizontal_flip(),
             # image_random_crop(32, padding=4, padding_mode="reflect"),
             image_normalize(mean=self.cifar_mean, std=self.cifar_std),
-            to_tensor()
+            # to_tensor()
         ])
 
         self.transform_val = ComposeTransforms([
@@ -103,7 +103,7 @@ class Cifar10Dataset(ImageClassificationDataset):
         for i in range(0, len(self.train_samples), self.batch_size):
             yield (
                 self.transform_train(
-                    self.X_train[self.train_samples[i : i + self.batch_size]].numpy()
+                    self.X_train[self.train_samples[i : i + self.batch_size]]
                 ),
                 self.Y_train[self.train_samples[i : i + self.batch_size]],
             )

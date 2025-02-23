@@ -7,7 +7,10 @@ from tinygrad.tensor import Tensor
 
 
 def to_numpy(img: Tensor) -> np.ndarray:
-    pass
+    def convert_to_numpy(img: Tensor):
+        return Tensor.numpy()
+    
+    return convert_to_numpy
 
 def to_tensor() -> Tensor:
     def convert_to_tensor(img: np.ndarray):
@@ -49,8 +52,8 @@ def image_resize(size: Tuple, interpolation: IntEnum = Image.Resampling.BILINEAR
 
 def image_normalize(mean: np.ndarray, std: np.ndarray):
     def normalize(img: Union[np.ndarray]) -> np.ndarray:
-        if img.max() > 1:
-            img = img / 255
+        # if bool(img.max() > 1):
+        img = img / 255
 
         return (img - mean.reshape(1, 3, 1, 1)) / std.reshape(1, 3, 1, 1)
 
