@@ -5,7 +5,8 @@ from typing import Generator
 
 from tinygrad import Tensor, dtypes
 from tinygrad.helpers import fetch, tqdm
-from src.types.dataset import ImageClassificationDataset
+from src.types.image_classification_dataset import ImageClassificationDataset
+from src.types.dataloader import Dataloader
 from src.data.transforms import (
     ComposeTransforms,
     image_random_horizontal_flip,
@@ -87,25 +88,10 @@ class Cifar10Dataset(ImageClassificationDataset):
 
                 self.X_val, self.Y_val = self.X_test, self.Y_test
 
-        self.train_reset()
-        self.val_reset()
-        self.test_reset()
+        self.train_dataloader = Dataloader(self.X_train, self.Y_train, self.batch_size, shuffle=True, transforms=self.transform_train)
+        self.val_dataloader = Dataloader(self.X_val, self.Y_val, self.batch_size, shuffle=False, transforms=self.transform_val)
+        self.test_dataloader = Dataloader(self.X_test, self.Y_test, self.batch_size, shuffle=False, transforms=self.transform_val)
         return super().setup()
-
-    def train_reset(self):
-        self.X_train = self.X_train.to(None)
-        self.Y_train = self.Y_train.to(None)
-        self.train_samples = self._get_sample_seq(self.X_train.shape[0], random=True)
-
-    def val_reset(self):
-        self.X_val = self.X_val.to(None)
-        self.Y_val = self.Y_val.to(None)
-        self.val_samples = self._get_sample_seq(self.X_val.shape[0])
-
-    def test_reset(self):
-        self.X_test = self.X_test.to(None)
-        self.Y_test = self.Y_test.to(None)
-        self.test_samples = self._get_sample_seq(self.X_test.shape[0])
     
     # The idea with generator is pretty straightforward
     # 1. Extracted data lies in RAM
@@ -115,33 +101,11 @@ class Cifar10Dataset(ImageClassificationDataset):
     # Good luck processing imagenet or something of a similar size, because 
     # Tensor slicing is not supported for tensors stored on disk.
 
-    def get_train_batch(self) -> Generator:
-        for i in range(0, len(self.train_samples), self.batch_size):
-            yield (
-                self.transform_train(
-                    self.X_train[self.train_samples[i : i + self.batch_size]]
-                ).to(self.device),
-                self.Y_train[self.train_samples[i : i + self.batch_size]].to(
-                    self.device
-                ),
-            )
+    def get_train_dataloader(self) -> Generator:
+        return self.train_dataloader
 
-    def get_val_batch(self) -> Generator:
-        for i in range(0, len(self.val_samples), self.batch_size):
-            yield (
-                self.transform_val(
-                    self.X_val[self.val_samples[i : i + self.batch_size]]
-                ).to(self.device),
-                self.Y_val[self.val_samples[i : i + self.batch_size]].to(self.device),
-            )
+    def get_val_dataloader(self) -> Generator:
+        return self.val_dataloader
 
-    def get_test_batch(self) -> Generator:
-        for i in range(0, len(self.test_samples), self.batch_size):
-            yield (
-                self.transform_val(
-                    self.X_test[[self.test_samples[i : i + self.batch_size]]]
-                ).to(self.device),
-                self.Y_test[[self.test_samples[i : i + self.batch_size]]].to(
-                    self.device
-                ),
-            )
+    def dataloader(self) -> Generator:
+        return self.test_dataloader
