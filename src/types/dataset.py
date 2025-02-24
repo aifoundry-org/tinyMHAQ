@@ -20,6 +20,7 @@ class ImageClassificationDataset:
         self._train_passes = 0
         self._val_passes = 0
         self._test_passes = 0
+        self.device: str = "CPU"
 
         if not os.path.exists(self.dataset_path):
             os.makedirs(self.dataset_path)

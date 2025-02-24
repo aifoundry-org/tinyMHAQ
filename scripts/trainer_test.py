@@ -12,8 +12,10 @@ from src.training.trainer import TinyTrainer
 
 if __name__ == "__main__":
     dataset = Cifar10Dataset("./", batch_size=64, val_split=0)
+    dataset.device = "GPU"
     model = resnet20_cifar10()
     trainer = TinyTrainer()
+    trainer.device = "GPU"
     trainer.epochs = 10
     trainer.optim = optim.Adam(get_parameters(model))
     trainer.loss_f = lambda out,y: out.sparse_categorical_crossentropy(y)

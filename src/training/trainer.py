@@ -3,6 +3,7 @@ import numpy as np
 
 from typing import Tuple
 from tinygrad.tensor import Tensor
+from tinygrad.device import ALL_DEVICES
 from tinygrad.helpers import trange, getenv
 
 TINY = getenv("TINY")
@@ -15,6 +16,10 @@ class TinyTrainer:
         self.optim = None
         self.train_metrics = []
         self.val_metrics = []
+        self.device: str = "LLVM"
+
+        if self.device not in ALL_DEVICES:
+            raise AssertionError(f"Wrong device '{self.device}', available options are: {ALL_DEVICES}")
         
 
     def fit(self, model, dataset):
@@ -23,9 +28,9 @@ class TinyTrainer:
         with Tensor.train():
             for i in (t:= trange(self.epochs)):
                 for batch in dataset.get_train_batch():
-                    out = model(batch[0])
+                    out = model(batch[0].to(self.device))
 
-                    loss = self.loss_f(out, batch[1])
+                    loss = self.loss_f(out, batch[1].to(self.device))
 
                     self.optim.zero_grad()
 
