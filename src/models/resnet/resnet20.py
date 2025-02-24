@@ -2,10 +2,11 @@ from tinygrad import Tensor, nn
 from tinygrad.nn.state import torch_load
 from tinygrad.helpers import fetch, get_child
 
-# def _weights_init(m):
-#     classname = m.__class__.__name__
-#     if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
-#         init.kaiming_normal(m.weight)
+# TODO kaiming init for all layers
+def _weights_init(m):
+    classname = m.__class__.__name__
+    if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
+        m.weight.kaiming_normal()
 
 weights = {
     'resnet20_orig': 'https://github.com/akamaster/pytorch_resnet_cifar10/raw/refs/heads/master/pretrained_models/resnet20-12fca82f.th',
