@@ -1,6 +1,7 @@
 import time
 import numpy as np
 
+from src.types.dataset import Dataset
 from typing import Tuple
 from tinygrad.tensor import Tensor
 from tinygrad.device import ALL_DEVICES
@@ -22,15 +23,17 @@ class TinyTrainer:
             raise AssertionError(f"Wrong device '{self.device}', available options are: {ALL_DEVICES}")
         
 
-    def fit(self, model, dataset):
-        # input, target = self._fetch_batch(data)
-        
+    def fit(self, model, dataset: Dataset):
+        train_dataloader = dataset.get_train_dataloader()
+
         with Tensor.train():
             for i in (t:= trange(self.epochs)):
-                for batch in dataset.get_train_batch():
-                    out = model(batch[0].to(self.device))
+                for _ in (bt:= trange(len(train_dataloader))):
+                    input, target = next(train_dataloader)
 
-                    loss = self.loss_f(out, batch[1].to(self.device))
+                    out = model(input.to(self.device))
+
+                    loss = self.loss_f(out, target.to(self.device))
 
                     self.optim.zero_grad()
 
@@ -38,7 +41,9 @@ class TinyTrainer:
 
                     self.optim.step()
 
-                    print(loss.numpy())
+                    bt.set_description(f"Loss = {loss.numpy():.5f}")
+                
+                train_dataloader.reset()
 
                 # for metric in self.train_metrics:
                 #     metric_value = metric(out, target)
@@ -49,23 +54,43 @@ class TinyTrainer:
 
 
 
-    def validate(self, model, data):
-        input, target = self._fetch_batch(data)
+    def validate(self, model, dataset: Dataset):
+
+        val_dataloader = dataset.get_val_dataloader()
 
         Tensor.training = False
+
+        for _ in (bt:= trange(len(val_dataloader))):
+            input, target = next(val_dataloader)
+
+            out = model(input.to(self.device))
+
+            loss = self.loss_f(out, target.to(self.device))
+
+            bt.set_description(f"Val Loss = {loss.numpy():.5f}")
+
+            for metric in self.val_metrics:
+                metric_value = metric(out, target)
+
+        val_dataloader.reset()
+
+
+    def test(self, model, dataset: Dataset):
+
+        test_dataloader = dataset.get_test_dataloader()
+
+        Tensor.training = False
+
+        for _ in (bt:= trange(len(test_dataloader))):
+            input, target = next(test_dataloader)
+
+            out = model(input.to(self.device))
+
+            loss = self.loss_f(out, target.to(self.device))
+
+            bt.set_description(f"Test loss = {loss.numpy():.5f}")
+
+            for metric in self.val_metrics:
+                metric_value = metric(out, target)
         
-        out = model(input)
-
-        val_loss = self.loss_f(out, target).numpy()
-
-        for metric in self.val_metrics:
-            metric_value = metric(out, target)
-
-        # TODO logging validation loss and validation metrics
-
-
-    def test(self, model, data):
-        pass
-
-    # def _fetch_batch(data) -> Tuple[Tensor, Tensor]:
-        # pass
+        test_dataloader.reset()

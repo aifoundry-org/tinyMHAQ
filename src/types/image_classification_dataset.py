@@ -11,7 +11,7 @@ from src.types.dataset import Dataset
 class ImageClassificationDataset(Dataset):
     def __init__(self, data_dir, batch_size, device):
 
-        self.dataset_path = os.path.join(self.data_dir, self.__class__.__name__)
+        self.dataset_path = os.path.join(data_dir, self.__class__.__name__)
         if not os.path.exists(self.dataset_path):
             os.makedirs(self.dataset_path)
 

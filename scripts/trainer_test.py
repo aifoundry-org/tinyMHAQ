@@ -11,8 +11,7 @@ from src.data.datasets.cifar10 import Cifar10Dataset
 from src.training.trainer import TinyTrainer
 
 if __name__ == "__main__":
-    dataset = Cifar10Dataset("./", batch_size=64, val_split=0)
-    dataset.device = "GPU"
+    dataset = Cifar10Dataset("./", batch_size=1024, val_split=0, device="GPU")
     model = resnet20_cifar10()
     trainer = TinyTrainer()
     trainer.device = "GPU"
@@ -21,4 +20,3 @@ if __name__ == "__main__":
     trainer.loss_f = lambda out,y: out.sparse_categorical_crossentropy(y)
 
     trainer.fit(model, dataset)
-    pass

@@ -18,7 +18,7 @@ from src.data.transforms import (
 
 
 class Cifar10Dataset(ImageClassificationDataset):
-    def __init__(self, data_dir, batch_size, val_split=0.2):
+    def __init__(self, data_dir, batch_size, val_split=0.2, device=None):
 
         self.val_split = val_split
         self.cifar_mean = Tensor(
@@ -43,7 +43,7 @@ class Cifar10Dataset(ImageClassificationDataset):
                 image_normalize(mean=self.cifar_mean, std=self.cifar_std),
             ]
         )
-        super().__init__(data_dir, batch_size)
+        super().__init__(data_dir, batch_size, device)
 
     def setup(self):
         fn = fetch("https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz")
@@ -101,11 +101,11 @@ class Cifar10Dataset(ImageClassificationDataset):
     # Good luck processing imagenet or something of a similar size, because 
     # Tensor slicing is not supported for tensors stored on disk.
 
-    def get_train_dataloader(self) -> Generator:
+    def get_train_dataloader(self):
         return self.train_dataloader
 
-    def get_val_dataloader(self) -> Generator:
+    def get_val_dataloader(self):
         return self.val_dataloader
 
-    def dataloader(self) -> Generator:
+    def get_test_dataloader(self):
         return self.test_dataloader

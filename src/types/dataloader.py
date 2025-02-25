@@ -47,10 +47,10 @@ class Dataloader:
         return self
 
     def __len__(self):
-        return np.ceil(self.ds_size / self.batch_size)
+        return np.ceil(self.ds_size / self.batch_size).astype(int)
 
     def _get_sample_idc(self):
         if self.shuffle:
-            return np.random.choice(self.size, self.size, replace=False).tolist()
+            return np.random.choice(self.ds_size, self.ds_size, replace=False).tolist()
         else:
-            return np.arange(self.size).tolist()
+            return np.arange(self.ds_size).tolist()
