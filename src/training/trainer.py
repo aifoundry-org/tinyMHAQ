@@ -7,11 +7,10 @@ from tinygrad.tensor import Tensor
 from tinygrad.device import ALL_DEVICES
 from tinygrad.helpers import trange, getenv
 
-TINY = getenv("TINY")
 
 class TinyTrainer:
     def __init__(self):
-        self.batch_size = getenv("BS", 64 if TINY else 16)
+        self.batch_size = 64
         self.epochs = getenv("EPOCHS", 2048)
         self.loss_f = None
         self.optim = None
@@ -42,15 +41,15 @@ class TinyTrainer:
                     self.optim.step()
 
                     bt.set_description(f"Loss = {loss.numpy():.5f}")
+
+                    for metric in self.train_metrics:
+                        metric_value = metric(out, target)
+                        bt.set_description(bt.desc + f"{metric.__class__.__name__} = {metric_value}")
                 
                 train_dataloader.reset()
 
-                # for metric in self.train_metrics:
-                #     metric_value = metric(out, target)
-                #     # TODO metric logging
+               
                 
-                # loss_ = loss.numpy()
-                # TODO loss logging
 
 
 
@@ -70,7 +69,8 @@ class TinyTrainer:
             bt.set_description(f"Val Loss = {loss.numpy():.5f}")
 
             for metric in self.val_metrics:
-                metric_value = metric(out, target)
+                metric_value = metric(out, target)               
+                bt.set_description(bt.desc + f"{metric.__class__.__name__} = {metric_value}")
 
         val_dataloader.reset()
 
@@ -92,5 +92,6 @@ class TinyTrainer:
 
             for metric in self.val_metrics:
                 metric_value = metric(out, target)
+                bt.set_description(bt.desc + f"{metric.__class__.__name__} = {metric_value}")
         
         test_dataloader.reset()
