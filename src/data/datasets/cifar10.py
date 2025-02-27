@@ -5,7 +5,7 @@ from typing import Generator
 
 from tinygrad import Tensor, dtypes
 from tinygrad.helpers import fetch, tqdm
-from src.types.image_classification_dataset import ImageClassificationDataset
+from src.types.vision.image_classification_dataset import ImageClassificationDataset
 from src.types.dataloader import Dataloader
 from src.data.transforms import (
     ComposeTransforms,
