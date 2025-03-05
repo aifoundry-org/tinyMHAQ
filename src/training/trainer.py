@@ -57,10 +57,6 @@ class TinyTrainer:
         self.profiler.disable()
         self.profiler.print_stats()
 
-               
-                
-
-
 
     def validate(self, model, dataset: Dataset):
 
