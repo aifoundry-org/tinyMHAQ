@@ -1,6 +1,7 @@
 from tinygrad import Tensor, nn
 from tinygrad.nn.state import torch_load
 from tinygrad.helpers import fetch, get_child
+from tinygrad.nn.state import get_parameters
 
 # TODO kaiming init for all layers
 def _weights_init(m):
@@ -93,6 +94,9 @@ class ResNet:
     
     def forward(self, x: Tensor) -> Tensor:
         return self.__call__(x)
+    
+    def to(self, device: str):
+        for x in get_parameters(self) if device else []: x.to_(device)
 
 def resnet20_cifar10(num_classes=10, pretrained=False):
     if not pretrained:

@@ -1,0 +1,4 @@
+line_profiler==4.2.0
+numpy==2.2.3
+pillow==11.1.0
+tinygrad

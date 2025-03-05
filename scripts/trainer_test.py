@@ -12,12 +12,13 @@ from src.data.metrics.accuracy import Accuracy
 from src.training.trainer import TinyTrainer
 
 if __name__ == "__main__":
-    dataset = Cifar10Dataset("./", batch_size=64, val_split=0, device="GPU")
+    dataset = Cifar10Dataset("./", batch_size=128, val_split=0, device="AMD")
     model = resnet20_cifar10()
+    model.to("AMD")
     trainer = TinyTrainer()
+    trainer.device = "AMD"
     trainer.train_metrics = [Accuracy()]
-    trainer.device = "CPU"
-    trainer.epochs = 10
+    trainer.epochs = 1
     trainer.optim = optim.Adam(get_parameters(model))
     trainer.loss_f = lambda out,y: out.sparse_categorical_crossentropy(y)
 

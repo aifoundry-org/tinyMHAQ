@@ -7,6 +7,7 @@ from tinygrad.tensor import Tensor
 from tinygrad.device import ALL_DEVICES
 from tinygrad.helpers import trange, getenv
 
+from line_profiler import LineProfiler
 
 class TinyTrainer:
     def __init__(self):
@@ -17,6 +18,7 @@ class TinyTrainer:
         self.train_metrics = []
         self.val_metrics = []
         self.device: str = "LLVM"
+        self.profiler = LineProfiler()
 
         if self.device not in ALL_DEVICES:
             raise AssertionError(f"Wrong device '{self.device}', available options are: {ALL_DEVICES}")
@@ -25,6 +27,10 @@ class TinyTrainer:
     def fit(self, model, dataset: Dataset):
         train_dataloader = dataset.get_train_dataloader()
 
+        self.profiler.add_function(model)
+        self.profiler.add_function(self.optim.step)
+
+        self.profiler.enable()
         with Tensor.train():
             for i in (t:= trange(self.epochs)):
                 for _ in (bt:= trange(len(train_dataloader))):
@@ -47,6 +53,9 @@ class TinyTrainer:
                         bt.set_description(bt.desc + f"{metric.__class__.__name__} = {metric_value}")
                 
                 train_dataloader.reset()
+                
+        self.profiler.disable()
+        self.profiler.print_stats()
 
                
                 
