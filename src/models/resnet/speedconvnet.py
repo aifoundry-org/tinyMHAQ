@@ -6,6 +6,7 @@ import math
 import time
 start_tm = time.perf_counter()
 # from extra.lr_scheduler import OneCycleLR
+from tinygrad.nn.state import get_parameters
 
 dtypes.default_float = dtypes.half
 
@@ -100,4 +101,7 @@ class SpeedyConvNet:
         x = x.sequential(
             [self.conv_group_1, self.conv_group_2, self.conv_group_3])
         return self.linear(x.max(axis=(2, 3))) * hyp['opt']['scaling_factor']
+    
+    def to(self, device: str):
+        for x in get_parameters(self) if device else []: x.to_(device)
 
