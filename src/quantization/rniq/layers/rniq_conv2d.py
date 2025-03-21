@@ -1,5 +1,7 @@
-from tinygrad import nn
+import math
+from tinygrad import nn, Tensor
 from src.quantization.qtensor import QTensor
+from src.quantization.rniq.rniq import Quantizer
 
 
 class NoisyConv2d(nn.Conv2d):
@@ -13,6 +15,7 @@ class NoisyConv2d(nn.Conv2d):
         dilation=1,
         groups=1,
         bias=True,
+        log_s_init: float = -12,
     ):
         super().__init__(
             in_channels,
@@ -24,13 +27,20 @@ class NoisyConv2d(nn.Conv2d):
             groups,
             bias,
         )
-        weight = QTensor(
-            data=self.weight.data,
-            device=self.weight.device,
-            dtype=self.weight.dtype,
-            requires_grad=self.weight.requires_grad,
-        )
-        self.weight = weight
-    
+
+        self.log_wght_s = Tensor([log_s_init], requires_grad=True)
+
+        self.Q = Quantizer(self.log_wght_s.exp2(), 0,
+                           Tensor(math.inf), Tensor(-math.inf))
+
     def __call__(self, x):
+        s = self.log_wght_s.exp2()
+        min = self.weight.min()
+
+        self.Q.scale = s
+        self.Q.zero_point = min
+
+        weight = self.Q.quantize(self.Q.dequantize(self.weight))
+        self.weight = weight
+
         return super().__call__(x)
