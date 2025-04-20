@@ -29,8 +29,9 @@ class NoisyConv2d(nn.Conv2d):
         )
 
         self.log_wght_s = Tensor([log_s_init], requires_grad=True)
+        # self.log_wght_s = Tensor([log_s_init], requires_grad=False)
 
-        self.Q = Quantizer(self.log_wght_s.exp2(), 0,
+        self.Q = Quantizer(self.log_wght_s.exp2(), Tensor(0),
                            Tensor(math.inf), Tensor(-math.inf))
 
     def __call__(self, x):
@@ -41,6 +42,7 @@ class NoisyConv2d(nn.Conv2d):
         self.Q.zero_point = min
 
         weight = self.Q.quantize(self.Q.dequantize(self.weight))
-        self.weight = weight
 
-        return super().__call__(x)
+        return x.conv2d(weight,
+                        self.bias, self.groups, self.stride, self.dilation, self.padding)
+

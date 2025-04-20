@@ -11,20 +11,17 @@ class NoisyAct:
         self.disable = disable
         self.signed = signed
         
-        self._act_b = Tensor([0]).float()
-        self._log_act_s = Tensor([init_s]).float()
-        self._log_act_q = Tensor([init_q]).float()
         
         if self.signed:
-            self.act_b = Tensor(self._act_b, requires_grad=True)
+            self.act_b = Tensor([0], requires_grad=True)
         else:
-            self.act_b = Tensor(self._act_b, requires_grad=False)
+            self.act_b = Tensor([0], requires_grad=False)
         
 
-        self.log_act_q = Tensor(self._log_act_q, requires_grad=True)
-        self.log_act_s = Tensor(self._log_act_s, requires_grad=True)
+        self.log_act_q = Tensor([init_q], requires_grad=True)
+        self.log_act_s = Tensor([init_s], requires_grad=True)
 
-        self.Q = Quantizer(self._log_act_s.exp2(), Tensor.zeros(1), Tensor(-math.inf), Tensor(math.inf))
+        self.Q = Quantizer(self.log_act_s.exp2(), Tensor.zeros(1), Tensor(-math.inf), Tensor(math.inf))
 
     def __call__(self, x):
         if self.disable:
