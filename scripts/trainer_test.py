@@ -17,8 +17,8 @@ from src.training.trainer import TinyTrainer
 
 if __name__ == "__main__":
     dataset = Cifar10Dataset("./", batch_size=128, val_split=0, device="AMD")
-    model = resnet20_cifar10_noisy()
-    # model = resnet20_cifar10()
+    # model = resnet20_cifar10_noisy()
+    model = resnet20_cifar10()
     # model = SpeedyConvNet()
     model.to("AMD")
     trainer = TinyTrainer()

@@ -12,36 +12,31 @@ from tinygrad.nn import optim
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from src.data.datasets.cifar10 import Cifar10Dataset
 from src.models.resnet.speedconvnet import SpeedyConvNet
-from tinygrad.helpers import partition, trange, getenv, Context
+from tinygrad.helpers import Context
+from src.utils.gpu_mem import measure_gpu_mem
 
-# Device.DEFAULT = "CPU"
 
 if __name__ == "__main__":
-    @TinyJit
-    def lazy_dataset_iter():
-        dataset = Cifar10Dataset(data_dir=os.path.dirname(os.path.dirname(os.path.realpath(__file__))), batch_size=64, val_split=0.0)
-        dataloader = dataset.get_train_dataloader()
-        print(len(dataloader))
-        for i in trange(len(dataloader)):
-            next(dataloader)
-    
-        
-    # lazy_dataset_iter()
+
+    dataset = Cifar10Dataset(data_dir=os.path.dirname(os.path.dirname(os.path.realpath(__file__))), batch_size=64, val_split=0.0)
+    train_dataloader = dataset.get_train_dataloader()
 
     model = SpeedyConvNet()
     opt = optim.Adam(get_parameters(model), lr=1e-6)
     loss_fn = lambda out,y: out.cross_entropy(y)
     
+    @measure_gpu_mem()
     def vanilla_train():
 
         batchsize = 64
         def vanilla_dataset():
-            X_train, Y_train, X_test, Y_test = nn.datasets.cifar()
+            X_train, Y_train, _, _ = nn.datasets.cifar()
             num_steps_per_epoch      = X_train.size(0) // batchsize
             idxs = np.arange(X_train.shape[0])
             tidxs = Tensor(idxs, dtype='int')[:num_steps_per_epoch*batchsize].reshape(num_steps_per_epoch, batchsize)
             # TODO: without this line indexing doesn't fuse!
             # X_train, Y_train, X_test, Y_test = [x.contiguous() for x in [X_train, Y_train, X_test, Y_test]]
+            # X_train, Y_train = [x.contiguous() for x in [X_train, Y_train]]
             # for i in trange(len(tidxs)):
                 # X_train[tidxs[i]], Y_train[tidxs[i]]
             
@@ -52,7 +47,18 @@ if __name__ == "__main__":
         def preprocess(X:Tensor, Y:Tensor) -> Tuple[Tensor, Tensor]:
             return ((X - cifar10_mean.view(1, -1, 1, 1)) / cifar10_std.view(1, -1, 1, 1)).cast(dtypes.default_float), Y.one_hot(10)
 
-        # @TinyJit
+        @TinyJit
+        @Tensor.train()
+        def new_train() -> Tensor:
+            X, Y = next(train_dataloader)
+            out = model(X)
+            loss = loss_fn(out, Y)
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+            return loss / (batchsize)
+
+        @TinyJit
         @Tensor.train()
         def train_step(idxs:Tensor) -> Tensor:
             with Context(SPLIT_REDUCEOP=0, FUSE_ARANGE=1):
@@ -69,9 +75,10 @@ if __name__ == "__main__":
         for epoch in range(1):
             for step in range(20):
                 gst = time.perf_counter()
+                # loss = train_step(tidx[step].contiguous())
                 loss = train_step(tidx[step])
+                # loss = new_train()
                 GlobalCounters.reset()
-                # print(loss.float().item())
                 print(time.perf_counter() - gst)
     
     vanilla_train()
