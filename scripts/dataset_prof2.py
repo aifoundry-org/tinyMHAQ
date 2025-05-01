@@ -85,6 +85,7 @@ def cifar10_dataset_pipeline():
 
 if __name__ == "__main__":
     from tinygrad.device import Device
+    print(f"Measuring pipeline with batch_size={BATCH_SIZE} and steps={STEPS}")
     # Device.DEFAULT = "LLVM"
     print("\n=== Cifar10Dataset Pipeline ===")
     cifar10_dataset_pipeline()
